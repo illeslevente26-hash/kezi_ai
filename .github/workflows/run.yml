@@ -5,8 +5,10 @@ on:
     - cron: "0 8 * * *"
     - cron: "0 14 * * *"
     - cron: "0 20 * * *"
-
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   run-ai:
@@ -27,5 +29,4 @@ jobs:
           pip install requests numpy scipy
 
       - name: AI futtatasa
-        run: |
-          python main.py
+        run: python main.py
