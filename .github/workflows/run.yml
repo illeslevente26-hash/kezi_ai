@@ -1,0 +1,25 @@
+name: Kezilabda AI Futtato
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # Minden nap reggel 8:00-kor fut automatikusan
+  workflow_dispatch: # Lehetővé teszi a gombnyomásra történő kézi indítást is
+
+jobs:
+  run-ai:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kod letoltese
+        uses: actions/checkout@v3
+
+      - name: Python beallitasa
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Csomagok telepitese
+        run: |
+          pip install numpy pandas scipy requests beautifulsoup4
+
+      - name: AI Futtatasa
+        run: python main.py
