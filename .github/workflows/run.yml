@@ -23,8 +23,11 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Python ellenorzese
-        run: python --version
+      - name: Ellenorzes
+        run: |
+          pwd
+          ls -la
+          python --version
 
       - name: Csomagok telepitese
         run: |
