@@ -1,40 +1,44 @@
-import requests
-import pandas as pd
+import urllib.request
+import xml.etree.ElementTree as ET
 import numpy as np
 from scipy.stats import poisson
 from datetime import datetime
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-}
-
-def get_today_handball_matches():
-    """Lekéri a mai nap összes kézilabda mérkőzését."""
-    today = datetime.now().strftime("%Y-%m-%d")
-    url = f"https://api.sofascore.com/api/v1/sport/handball/scheduled-events/{today}"
-    
+def get_live_real_handball_matches():
+    """Valódi aznapi és élő kézilabda meccseket kér le nyílt adatfolyamból."""
+    url = "https://www.scorespro.com/rss2/live-handball.xml"
     matches = []
+    
     try:
-        response = requests.get(url, headers=HEADERS, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            events = data.get('events', [])
-            for event in events:
-                home = event.get('homeTeam', {}).get('name', 'Hazai')
-                away = event.get('awayTeam', {}).get('name', 'Vendég')
-                tournament = event.get('tournament', {}).get('name', 'Kézilabda Bajnokság')
+        req = urllib.request.Request(
+            url, 
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            xml_data = response.read()
+            
+        root = ET.fromstring(xml_data)
+        for item in root.findall('.//item'):
+            title = item.find('title').text if item.find('title') is not None else ""
+            # Címsor formátuma: "Team A vs Team B"
+            if " vs " in title:
+                parts = title.split(" vs ")
+                home = parts[0].replace("(*)", "").strip()
+                away = parts[1].replace("(*)", "").strip()
+                
+                category = item.find('category').text if item.find('category') is not None else "Kézilabda Bajnokság"
                 matches.append({
                     'home_team': home,
                     'away_team': away,
-                    'league': tournament
+                    'league': category
                 })
     except Exception as e:
-        print(f"Hálózati lekérdezés hiba: {e}")
+        print(f"Adatlekérdezési hiba: {e}")
         
     return matches
 
-def calculate_odds(home_team, away_team):
-    """Poisson-eloszlás alapú valószínűség számítás."""
+def calculate_handball_odds(home_team, away_team):
+    """Poisson-eloszlású kézilabda elemzés."""
     exp_home = 28.5
     exp_away = 26.8
 
@@ -48,21 +52,15 @@ def calculate_odds(home_team, away_team):
     return f"Esélyek: {home_team}: {p_home:.1f}% | Döntetlen: {p_draw:.1f}% | {away_team}: {p_away:.1f}%"
 
 if __name__ == "__main__":
-    today_str = datetime.now().strftime('%Y-%m-%d')
-    print(f"=== AZNAPI KÉZILABDA MÉRKŐZÉSEK AI ELEMZÉSE ({today_str}) ===\n")
+    today_str = datetime.now().strftime('%Y-%m-%d %H:%M')
+    print(f"=== ÉLŐ/AZNAPI KÉZILABDA MÉRKŐZÉSEK ELEMZÉSE ({today_str}) ===\n")
     
-    today_matches = get_today_handball_matches()
+    today_matches = get_live_real_handball_matches()
     
-    # Tartalék adatsor, ha a mai napon nincs meccs vagy a hálózat blokkolja a lekérést
     if not today_matches:
-        print("Saját adatforrás aktív: Mai kézilabda mérkőzések feldolgozása...\n")
-        today_matches = [
-            {'league': 'EHF Bajnokok Ligája', 'home_team': 'Veszprém KC', 'away_team': 'FC Barcelona'},
-            {'league': 'EHF Bajnokok Ligája', 'home_team': 'Pick Szeged', 'away_team': 'Barlinek Industria Kielce'},
-            {'league': 'Német Bundesliga', 'home_team': 'Füchse Berlin', 'away_team': 'THW Kiel'}
-        ]
-
-    print(f"Összesen {len(today_matches)} mérkőzés elemzése készen áll:\n")
-    for match in today_matches:
-        print(f"[{match['league']}] {match['home_team']} vs {match['away_team']}")
-        print(f"  -> {calculate_odds(match['home_team'], match['away_team'])}\n")
+        print("Jelenleg egyetlen élő/aznapi kézilabda mérkőzés sem érhető el az adatfolyamban.")
+    else:
+        print(f"Összesen {len(today_matches)} valódi mérkőzés található az élő adatfolyamban:\n")
+        for match in today_matches[:15]: # Az első 15 legfrissebb meccs
+            print(f"[{match['league']}] {match['home_team']} vs {match['away_team']}")
+            print(f"  -> {calculate_handball_odds(match['home_team'], match['away_team'])}\n")
