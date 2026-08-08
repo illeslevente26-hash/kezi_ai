@@ -23,11 +23,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Ellenorzes
+      - name: Fajlok ellenorzese
         run: |
+          echo "Aktualis konyvtar:"
           pwd
-          ls -la
+          echo "Fajlok:"
+          find . -maxdepth 2 -type f | sort
+
+      - name: Python es pip ellenorzese
+        run: |
           python --version
+          pip --version
 
       - name: Csomagok telepitese
         run: |
@@ -35,4 +41,6 @@ jobs:
           pip install requests numpy scipy
 
       - name: AI futtatasa
-        run: python main.py
+        run: |
+          echo "Main inditasa..."
+          python main.py
