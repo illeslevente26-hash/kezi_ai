@@ -1,2 +1,0 @@
-# kezi_ai
-Winner
