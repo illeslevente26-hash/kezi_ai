@@ -1,7 +1,7 @@
-print("A main.py elindult sikeresen.")
+print("AI teszt elindult.")
 
 def main():
-    print("AI futtatás teszt rendben.")
+    print("Minden rendben, a Python működik.")
 
 if __name__ == "__main__":
     main()
